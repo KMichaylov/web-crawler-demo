@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/url")
+@RequestMapping("/api/v1/url")
 public class UrlController {
 
     private final UrlService urlService;
