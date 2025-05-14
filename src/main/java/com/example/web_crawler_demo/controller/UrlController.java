@@ -1,7 +1,9 @@
 package com.example.web_crawler_demo.controller;
 
 import com.example.web_crawler_demo.response.CrawlerResponse;
+import com.example.web_crawler_demo.response.ErrorResponse;
 import com.example.web_crawler_demo.service.UrlService;
+import jakarta.validation.Valid;
 import netscape.javascript.JSObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +21,13 @@ public class UrlController {
     }
 
     @GetMapping("/pages")
-    ResponseEntity<CrawlerResponse> crawlForUrl(@RequestParam String target) {
+    ResponseEntity<?> crawlForUrl(@RequestParam String target) {
         Optional<CrawlerResponse> crawlerOutput = urlService.crawl(target);
 
-        return crawlerOutput.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        return crawlerOutput
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() ->
+                        ResponseEntity.badRequest().body(new ErrorResponse("Invalid or malformed URL")));
     }
 
 }

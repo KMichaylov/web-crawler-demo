@@ -8,6 +8,7 @@ import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -27,13 +28,16 @@ public class UrlServiceImpl implements UrlService {
     public Optional<CrawlerResponse> crawl(String url) {
         try {
             URI uri = new URI(url);
+            if (uri.getScheme() == null || uri.getHost() == null) {
+                return Optional.empty();
+            }
             domain = uri.getScheme() + "://" + uri.getHost();
             visitedPages.clear();
             List<String> pages = new ArrayList<>();
             crawlPage(url, pages);
             return Optional.of(new CrawlerResponse(domain, pages));
         } catch (URISyntaxException e) {
-            System.out.println(e.getMessage());
+            System.out.println("An syntax uri error occurred: " + e.getMessage());
             return Optional.empty();
         }
     }
