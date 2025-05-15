@@ -3,8 +3,6 @@ package com.example.web_crawler_demo.controller;
 import com.example.web_crawler_demo.response.CrawlerResponse;
 import com.example.web_crawler_demo.response.ErrorResponse;
 import com.example.web_crawler_demo.service.UrlService;
-import jakarta.validation.Valid;
-import netscape.javascript.JSObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
