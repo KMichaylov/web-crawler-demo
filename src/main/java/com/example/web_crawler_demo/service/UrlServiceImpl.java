@@ -17,7 +17,7 @@ import java.util.*;
 public class UrlServiceImpl implements UrlService {
     private final Set<String> visitedPages;
     private String domain;
-
+    private final int TIMEOUT = 5000;
 
     public UrlServiceImpl() {
         this.visitedPages = new HashSet<>();
@@ -34,7 +34,7 @@ public class UrlServiceImpl implements UrlService {
             domain = uri.getScheme() + "://" + uri.getHost();
             visitedPages.clear();
             List<String> pages = new ArrayList<>();
-            crawlPage(url, pages);
+            crawlPageIterative(url, pages);
             return Optional.of(new CrawlerResponse(domain, pages));
         } catch (URISyntaxException e) {
             System.out.println("An syntax uri error occurred: " + e.getMessage());
@@ -48,10 +48,12 @@ public class UrlServiceImpl implements UrlService {
         }
         try {
             // Get the whole html page for the link
-            Document doc = Jsoup.connect(baseUrl).get();
+            Document doc = Jsoup.connect(baseUrl)
+                    .timeout(TIMEOUT)
+                    .get();
+
             visitedPages.add(baseUrl);
             urls.add(baseUrl);
-            System.out.println(doc.body());
 
             // Go through each link on the page and nest inside it
             Elements linksOnPage = doc.select("a[href]");
@@ -61,6 +63,39 @@ public class UrlServiceImpl implements UrlService {
             }
         } catch (IOException e) {
             System.err.println("Something went wrong with processing" + baseUrl + ": " + e.getMessage());
+        }
+    }
+
+    private void crawlPageIterative(String startUrl, List<String> urls) {
+        Queue<String> queue = new LinkedList<>();
+        queue.offer(startUrl);
+
+        int MAX_NUMBER_OF_PAGES = 1000;
+        while (!queue.isEmpty() && visitedPages.size() < MAX_NUMBER_OF_PAGES) {
+            String currentUrl = queue.poll();
+
+            if (visitedPages.contains(currentUrl) || !currentUrl.startsWith(domain)) {
+                continue;
+            }
+
+            try {
+                Document doc = Jsoup.connect(currentUrl)
+                        .timeout(TIMEOUT)
+                        .get();
+
+                visitedPages.add(currentUrl);
+                urls.add(currentUrl);
+
+                Elements linksOnPage = doc.select("a[href]");
+                for (Element link : linksOnPage) {
+                    String absoluteUrl = link.absUrl("href");
+                    if (!visitedPages.contains(absoluteUrl) && absoluteUrl.startsWith(domain)) {
+                        queue.offer(absoluteUrl);
+                    }
+                }
+            } catch (IOException e) {
+                System.err.println("Something went wrong with processing " + currentUrl + ": " + e.getMessage());
+            }
         }
     }
 
