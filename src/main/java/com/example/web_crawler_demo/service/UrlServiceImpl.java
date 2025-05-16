@@ -8,7 +8,6 @@ import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -17,7 +16,6 @@ import java.util.*;
 public class UrlServiceImpl implements UrlService {
     private final Set<String> visitedPages;
     private String domain;
-    private final int TIMEOUT = 5000;
 
     public UrlServiceImpl() {
         this.visitedPages = new HashSet<>();
@@ -46,23 +44,15 @@ public class UrlServiceImpl implements UrlService {
         if (visitedPages.contains(baseUrl) || !baseUrl.startsWith(domain)) {
             return;
         }
-        try {
-            // Get the whole html page for the link
-            Document doc = Jsoup.connect(baseUrl)
-                    .timeout(TIMEOUT)
-                    .get();
 
-            visitedPages.add(baseUrl);
-            urls.add(baseUrl);
+        List<String> links = fetchAndExtractLinks(baseUrl);
+        if (!visitedPages.contains(baseUrl)) {
+            return;
+        }
 
-            // Go through each link on the page and nest inside it
-            Elements linksOnPage = doc.select("a[href]");
-            for (Element link : linksOnPage) {
-                String absoluteUrl = link.absUrl("href");
-                crawlPage(absoluteUrl, urls);
-            }
-        } catch (IOException e) {
-            System.err.println("Something went wrong with processing" + baseUrl + ": " + e.getMessage());
+        urls.add(baseUrl);
+        for (String link : links) {
+            crawlPage(link, urls);
         }
     }
 
@@ -78,25 +68,41 @@ public class UrlServiceImpl implements UrlService {
                 continue;
             }
 
-            try {
-                Document doc = Jsoup.connect(currentUrl)
-                        .timeout(TIMEOUT)
-                        .get();
+            List<String> allLinks = fetchAndExtractLinks(currentUrl);
 
-                visitedPages.add(currentUrl);
-                urls.add(currentUrl);
-
-                Elements linksOnPage = doc.select("a[href]");
-                for (Element link : linksOnPage) {
-                    String absoluteUrl = link.absUrl("href");
-                    if (!visitedPages.contains(absoluteUrl) && absoluteUrl.startsWith(domain)) {
-                        queue.offer(absoluteUrl);
-                    }
-                }
-            } catch (IOException e) {
-                System.err.println("Something went wrong with processing " + currentUrl + ": " + e.getMessage());
+            if (!visitedPages.contains(currentUrl)) {
+                continue;
             }
+
+            urls.add(currentUrl);
+            queue.addAll(allLinks);
         }
     }
+
+    private List<String> fetchAndExtractLinks(String url) {
+        try {
+            int TIMEOUT = 5000;
+            Document doc = Jsoup.connect(url)
+                    .timeout(TIMEOUT)
+                    .get();
+
+            visitedPages.add(url);
+
+            Elements linksOnPage = doc.select("a[href]");
+            List<String> embeddedLinksInPage = new ArrayList<>();
+            for (Element link : linksOnPage) {
+                String absoluteUrl = link.absUrl("href");
+                if (!visitedPages.contains(absoluteUrl) && absoluteUrl.startsWith(domain)) {
+                    embeddedLinksInPage.add(absoluteUrl);
+                }
+            }
+
+            return embeddedLinksInPage;
+        } catch (IOException e) {
+            System.err.println("Something went wrong with processing " + url + ": " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
 
 }
