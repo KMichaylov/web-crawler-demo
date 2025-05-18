@@ -107,6 +107,8 @@ public class UrlServiceImpl implements UrlService {
         try {
             int TIMEOUT = 5000;
             Document doc = Jsoup.connect(url)
+                    .ignoreHttpErrors(true)
+                    .followRedirects(true)
                     .timeout(TIMEOUT)
                     .get();
 
