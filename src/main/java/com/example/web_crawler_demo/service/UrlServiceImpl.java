@@ -12,6 +12,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+
+/**
+ * Implementation of the UrlService that uses Jsoup to crawl web pages.
+ */
 @Service
 public class UrlServiceImpl implements UrlService {
     private final Set<String> visitedPages;
@@ -40,6 +44,12 @@ public class UrlServiceImpl implements UrlService {
         }
     }
 
+    /**
+     * A recursive crawl of the given URL.
+     *
+     * @param baseUrl the URL to start from
+     * @param urls    the list to collect visited URLs
+     */
     private void crawlPage(String baseUrl, List<String> urls) {
         if (visitedPages.contains(baseUrl) || !baseUrl.startsWith(domain)) {
             return;
@@ -56,6 +66,13 @@ public class UrlServiceImpl implements UrlService {
         }
     }
 
+
+    /**
+     * An iterative crawl starting from the given URL.
+     *
+     * @param startUrl the URL to start crawling from
+     * @param urls     the list to store collected URLs
+     */
     private void crawlPageIterative(String startUrl, List<String> urls) {
         Queue<String> queue = new LinkedList<>();
         queue.offer(startUrl);
@@ -79,6 +96,13 @@ public class UrlServiceImpl implements UrlService {
         }
     }
 
+    /**
+     * Fetches a page from the given URL and extracts internal links.
+     *
+     * @param url the URL to fetch and parse
+     * @return a list of links found on the page from the same domain,
+     * or an empty list if an error occurs
+     */
     private List<String> fetchAndExtractLinks(String url) {
         try {
             int TIMEOUT = 5000;
