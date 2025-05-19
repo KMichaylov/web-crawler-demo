@@ -2,39 +2,45 @@
 ## Introduction
 The current project is a demonstration for the working of a simple web crawler.
 A web crawler is an automated program or bot that systematically searches websites for specific information.
-Currently, the crawler has two variants:
+Currently, our crawler has three variants:
 
-* Iterative crawling
+* Iterative crawler
+* Recursive crawler
+* Asynchronous crawler
 
-* Recursive crawling
 ## Design
 Below is a high-level architecture of the system:
 ![Image showing top-level architecture](Architecture.png "Top-level architecture")
 ## Tools
-* Java 17+
+* Java 22
 
 * Spring Boot
 
 * Jsoup (for HTML parsing)
 
-* JUnit and MockMvc
+* JUnit and MockMvc (for testing)
 
 ## Performance
-In this section we examine the performance differences time-wise between the iterative crawler version
-and the recursive one
+In this section we examine the performance differences time-wise between the iterative crawler version,
+the recursive and asynchronous one. The metrics are obtained by measuring the execution time of the ```crawl()``` method in the service layer,
+as recorded by the controller.
 
-| Algorithm | Website | Time in seconds |
-|-----------|-----|----|
-| Iterative |https://crawler-test.com/|----|
-| Iterative |https://crawler-test.com/|----|
-| Recursive |https://demo.cyotek.com/|----|
-| Recursive |https://demo.cyotek.com/|----|
+| Algorithm    | Website | Time in seconds |
+|--------------|-----|-----------------|
+| Iterative    |https://crawler-test.com/| 210 seconds     |
+| Recursive    |https://crawler-test.com/| 208 seconds     |
+| Asynchonous  |https://crawler-test.com/| 17 seconds      |
+| Iterative    |https://demo.cyotek.com/| 16 seconds      |
+| Recursive    |https://demo.cyotek.com/| 14 seconds      |
+| Asynchronous |https://demo.cyotek.com/| 2.5 seconds     |
 
-
+There has been almost no difference between the iterative and recursive version for the crawler. On the other hand,
+the asynchronous variant has significant improvement.
 ## Possible Improvements
 
 ## Running the Project
-Below the steps for running the project are shown.
+Below the steps for building and running the project are shown.
+
 ### Building Project
 ```bash
   git clone https://github.com/KMichaylov/web-crawler-demo.git
