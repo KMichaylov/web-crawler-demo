@@ -8,6 +8,13 @@ Currently, our crawler has three variants:
 * Recursive crawler
 * Asynchronous crawler
 
+## Project Structure
+com.example.web_crawler_demo  
+├── controller       → REST controller  
+├── service          → Logic for crawling    
+├── response         → Response model for the requests  
+└── WebCrawlerDemoApplication.java → Class for starting Spring Boot application
+
 ## Design
 Below is a high-level architecture of the system:
 ![Image showing top-level architecture](Architecture.png "Top-level architecture")
@@ -49,13 +56,6 @@ as recorded by the controller.
 
 **Observation**: The iterative and recursive approaches yield similar performance,
 however the asynchronous crawler shows significant speed improvements, especially for larger websites.
-
-## Project Structure
-com.example.web_crawler_demo  
-├── controller       → REST controller  
-├── service          → Logic for crawling    
-├── response         → Response model for the requests  
-└── WebCrawlerDemoApplication.java → Class for starting Spring Boot application
 
 ## Running the Project
 Below the steps for building and running the project are shown. It is important that Maven and Java 22 SDK is installed on your computer.
