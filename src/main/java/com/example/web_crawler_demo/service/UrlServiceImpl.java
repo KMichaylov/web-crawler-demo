@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.concurrent.*;
 
 
 /**
@@ -20,6 +21,7 @@ import java.util.*;
 public class UrlServiceImpl implements UrlService {
     private final Set<String> visitedPages;
     private String domain;
+    private final static int MAX_NUMBER_OF_PAGES = 1000;
 
     public UrlServiceImpl() {
         this.visitedPages = new HashSet<>();
@@ -36,7 +38,7 @@ public class UrlServiceImpl implements UrlService {
             domain = uri.getScheme() + "://" + uri.getHost();
             visitedPages.clear();
             List<String> pages = new ArrayList<>();
-            crawlPageIterative(url, pages);
+            crawlPageAsynchronous(url, pages);
             return Optional.of(new CrawlerResponse(domain, pages));
         } catch (URISyntaxException e) {
             System.out.println("An syntax uri error occurred: " + e.getMessage());
@@ -51,7 +53,7 @@ public class UrlServiceImpl implements UrlService {
      * @param urls    the list to collect visited URLs
      */
     private void crawlPage(String baseUrl, List<String> urls) {
-        if (visitedPages.contains(baseUrl) || !baseUrl.startsWith(domain)) {
+        if (!baseUrl.startsWith(domain) || !visitedPages.add(baseUrl)) {
             return;
         }
 
@@ -77,11 +79,10 @@ public class UrlServiceImpl implements UrlService {
         Queue<String> queue = new LinkedList<>();
         queue.offer(startUrl);
 
-        int MAX_NUMBER_OF_PAGES = 1000;
         while (!queue.isEmpty() && visitedPages.size() < MAX_NUMBER_OF_PAGES) {
             String currentUrl = queue.poll();
 
-            if (visitedPages.contains(currentUrl) || !currentUrl.startsWith(domain)) {
+            if (!currentUrl.startsWith(domain) || !visitedPages.add(currentUrl)) {
                 continue;
             }
 
@@ -97,13 +98,76 @@ public class UrlServiceImpl implements UrlService {
     }
 
     /**
-     * Fetches a page from the given URL and extracts internal links.
+     * An asynchronous crawl starting from the given URL.
+     *
+     * @param startUrl the URL to start crawling from
+     * @param urls     the list to store collected URLs
+     */
+    private void crawlPageAsynchronous(String startUrl, List<String> urls) {
+        int MAX_THREADS = 16;
+
+        ExecutorService executor = Executors.newFixedThreadPool(MAX_THREADS);
+        Queue<String> queue = new ConcurrentLinkedQueue<>();
+        Set<String> visited = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        Set<String> collectedUrls = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+        queue.offer(startUrl);
+
+        while (!queue.isEmpty() && visited.size() < MAX_NUMBER_OF_PAGES) {
+            List<Future<?>> futures = new ArrayList<>();
+
+            while (!queue.isEmpty()) {
+                String currentUrl = queue.poll();
+
+                if (currentUrl == null || !currentUrl.startsWith(domain) || !visited.add(currentUrl)) {
+                    continue;
+                }
+
+                futures.add(executor.submit(() -> {
+                    List<String> linksOnSameDomain = fetchAndExtractLinks(currentUrl, visited);
+                    collectedUrls.add(currentUrl);
+                    queue.addAll(linksOnSameDomain);
+                }));
+            }
+
+            for (Future<?> future : futures) {
+                try {
+                    future.get();
+                } catch (Exception e) {
+                    System.err.println("Something went wrong: " + e.getMessage());
+                }
+            }
+        }
+
+        executor.shutdown();
+
+        synchronized (urls) {
+            urls.clear();
+            urls.addAll(collectedUrls);
+        }
+    }
+
+
+    /**
+     * Invokes the fetchAndExtractLinks with the existing set of visited pages.
      *
      * @param url the URL to fetch and parse
-     * @return a list of links found on the page from the same domain,
+     * @return @return a list of links found on the page from the same domain,
      * or an empty list if an error occurs
      */
     private List<String> fetchAndExtractLinks(String url) {
+        return fetchAndExtractLinks(url, visitedPages);
+    }
+
+    /**
+     * Fetches a page from the given URL and extracts internal links.
+     *
+     * @param url          the URL to fetch and parse
+     * @param visitedPages the set of currently visited pages
+     * @return a list of links found on the page from the same domain,
+     * or an empty list if an error occurs
+     */
+    private List<String> fetchAndExtractLinks(String url, Set<String> visitedPages) {
         try {
             int TIMEOUT = 5000;
             Document doc = Jsoup.connect(url)
@@ -112,18 +176,17 @@ public class UrlServiceImpl implements UrlService {
                     .timeout(TIMEOUT)
                     .get();
 
-            visitedPages.add(url);
 
             Elements linksOnPage = doc.select("a[href]");
-            List<String> embeddedLinksInPage = new ArrayList<>();
+            List<String> embeddedLinks = new ArrayList<>();
             for (Element link : linksOnPage) {
                 String absoluteUrl = link.absUrl("href");
-                if (!visitedPages.contains(absoluteUrl) && absoluteUrl.startsWith(domain)) {
-                    embeddedLinksInPage.add(absoluteUrl);
+                if (absoluteUrl.startsWith(domain)) {
+                    embeddedLinks.add(absoluteUrl);
                 }
             }
 
-            return embeddedLinksInPage;
+            return embeddedLinks;
         } catch (IOException e) {
             System.err.println("Something went wrong with processing " + url + ": " + e.getMessage());
             return Collections.emptyList();
