@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
+
 /**
  * REST controller that exposes endpoints for crawling URLs.
  */
@@ -17,25 +18,24 @@ public class UrlController {
     private final UrlService urlService;
 
     /**
-     * Constructs a new UrlController with the given UrlService.
+     * Initializes the UrlController with the specified UrlService.
      *
-     * @param urlService the service used for crawling URLs
+     * @param urlService the service containing logic for crawling URLs
      */
     public UrlController(UrlService urlService) {
         this.urlService = urlService;
     }
 
     /**
-     * Crawls the specified target URL and returns the result.
+     * Handles a GET request to crawl the specified URL.
      *
-     * @param target the target URL to crawl
-     * @return crawl result as a {@link CrawlerResponse} that is automatically converted to JSON on client side,
-     *         or an error message if the URL is invalid
+     * @param target the URL to crawl
+     * @return crawl result as a CrawlerResponse that is automatically converted to JSON on client side,
+     * or an error message if the URL is invalid
      */
     @GetMapping("/pages")
     ResponseEntity<?> crawlForUrl(@RequestParam String target) {
         Optional<CrawlerResponse> crawlerOutput = urlService.crawl(target);
-
         return crawlerOutput
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElseGet(() ->

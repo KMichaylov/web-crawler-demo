@@ -13,7 +13,7 @@ public class CrawlerResponse {
     List<String> pages;
 
     /**
-     * Constructs a new UrlController with the given UrlService.
+     * Constructs a new CrawlerResponse with the given domain and pages parameters.
      *
      * @param domain the domain of the targeted URL
      * @param pages  the crawled pages belonging to the domain
