@@ -45,7 +45,7 @@ In this section we examine the performance differences time-wise between the ite
 the recursive and asynchronous one. The metrics are obtained by measuring the execution time of the ```crawl()``` method in the service layer,
 as recorded by the controller.
 
-| Algorithm    | Website | Time in seconds |
+| Algorithm    | Website | Time |
 |--------------|-----|-----------------|
 | Iterative    |https://crawler-test.com/| 210 seconds     |
 | Recursive    |https://crawler-test.com/| 208 seconds     |
