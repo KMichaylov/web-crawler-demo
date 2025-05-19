@@ -58,7 +58,7 @@ com.example.web_crawler_demo
 └── WebCrawlerDemoApplication.java → Class for starting Spring Boot application
 
 ## Running the Project
-Below the steps for building and running the project are shown.
+Below the steps for building and running the project are shown. It is important that Maven and Java 22 SDK is installed on your computer.
 
 ### Building Project
 ```bash
