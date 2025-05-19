@@ -11,6 +11,19 @@ Currently, our crawler has three variants:
 ## Design
 Below is a high-level architecture of the system:
 ![Image showing top-level architecture](Architecture.png "Top-level architecture")
+
+## API Reference
+
+#### Crawl pages for this URL
+
+```http
+    GET localhost:8080/api/v1/url/pages?target=example_url
+```
+
+| Parameter | Type     | Description                         |
+| :-------- | :------- |:------------------------------------|
+| `example_url` | `string` | **Required**. The URL to be crawled |
+
 ## Tools
 * Java 22
 
@@ -34,9 +47,15 @@ as recorded by the controller.
 | Recursive    |https://demo.cyotek.com/| 14 seconds      |
 | Asynchronous |https://demo.cyotek.com/| 2.5 seconds     |
 
-There has been almost no difference between the iterative and recursive version for the crawler. On the other hand,
-the asynchronous variant has significant improvement.
-## Possible Improvements
+**Observation**: The iterative and recursive approaches yield similar performance,
+however the asynchronous crawler shows significant speed improvements, especially for larger websites.
+
+## Project Structure
+com.example.web_crawler_demo  
+├── controller       → REST controller  
+├── service          → Logic for crawling    
+├── response         → Response model for the requests  
+└── WebCrawlerDemoApplication.java → Class for starting Spring Boot application
 
 ## Running the Project
 Below the steps for building and running the project are shown.
